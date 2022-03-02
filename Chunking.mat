@@ -11,27 +11,53 @@ A=[];
 B=[];
 
 A= cat(1,data.ECG2w_1(:),data.ECG2w_2(:),data.ECG2w_3(:),data.ECG2w_4(:),data.ECG2w_5(:),data.ECG2w_6(:),data.ECG2w_7(:),data.ECG2w_8(:),data.ECG2w_9(:),data.ECG2w_10(:),data.ECG2w_11(:),data.ECG2w_12(:),data.ECG2w_13(:));
+
+a=A(:);
+a= reshape(A,1,[]);
+a=a';
+
+
 B= cat(1,data.ECG2w_time_1(:),data.ECG2w_time_2(:),data.ECG2w_time_3(:),data.ECG2w_time_4(:),data.ECG2w_time_5(:),data.ECG2w_time_6(:),data.ECG2w_time_7(:),data.ECG2w_time_8(:),data.ECG2w_time_9(:),data.ECG2w_time_10(:),data.ECG2w_time_11(:),data.ECG2w_time_12(:),data.ECG2w_time_13(:));
 
+C=B(:);
+C= reshape(B,1,[]);
 
-initialTime=datetime(B(1)*86400, 'convertfrom','posixtime')
-counter = 1
+AA= reshape(A,1,[]);
+
+initialTime=datetime(B(1)*86400, 'convertfrom','posixtime');
+counter = 1;
+tempRowCounter = 1;
 
 while 1
 
-    nextEndTimeSt = initialTime.Year + "-" + initialTime.Month + "-" + initialTime.Day + " " + "23:59:59.00"
+    nextEndTimeSt = initialTime.Year + "-" + initialTime.Month + "-" + initialTime.Day + " " + "23:59:59.00" 
     nextEndTime = datetime(nextEndTimeSt,'InputFormat','yyyy-MM-dd HH:mm:ss.S')
-    %posixtime(datetime(initialTime));
+
+
+    initialTimeInT = (posixtime(datetime(initialTime))/86400);
+    %fprintf('%f\n',initialTimeInT)
+    nextEndTimeInT = (posixtime(datetime(nextEndTime))/86400);
+    %fprintf('%f\n',nextEndTimeInT);
+
+
+    tempArr = C(C >= initialTimeInT & C <= nextEndTimeInT);
+    sz = length(tempArr)
     
-    finalEndTime = datetime(B(end)*86400, 'convertfrom','posixtime')
-    if nextEndTime > finalEndTime
-        counter = counter + 1
+    endRow = sz*480;
+    actualEndRow = tempRowCounter + endRow;
+    X1=AA(tempRowCounter:actualEndRow);
+    X1= reshape(X1,1,[]);
+    tempRowCounter=actualEndRow+1;
+
+    finalEndTime = datetime(B(end)*86400, 'convertfrom','posixtime');
+    if counter == 14 %nextEndTime > finalEndTime
+        %counter = counter + 1;
         break
     end
     
-    initialTime.Day = initialTime.Day + 1
-    nextInitTimeSt = initialTime.Year + "-" + initialTime.Month + "-" + initialTime.Day + " " + "00:00:00.00"
-    initialTime = datetime(nextInitTimeSt,'InputFormat','yyyy-MM-dd HH:mm:ss.S')
+    initialTime.Day = initialTime.Day + 1;
+    nextInitTimeSt = initialTime.Year + "-" + initialTime.Month + "-" + initialTime.Day + " " + "00:00:00.00";
+    initialTime = datetime(nextInitTimeSt,'InputFormat','yyyy-MM-dd HH:mm:ss.S');
     counter = counter + 1
 end
 
