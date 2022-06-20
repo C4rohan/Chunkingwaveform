@@ -1,23 +1,41 @@
 
-for x=2
+for x=1:400
 SE=sprintf('%d_waveform.mat',x);
-S=sprintf('%dwaveform',x);
+
 if exist(SE,'file')
+load(num2str(sprintf('%d_waveform.mat',x)));
 
-dd=load(num2str(sprintf('%d_waveform.mat',x)));
-mkdir(sprintf('%d_waveform',x))
-cd(sprintf('%d_waveform',x))
-A=[];
+mkdir(sprintf('%d_Patient',x))
+cd(sprintf('%d_Patient',x))
+mkdir('ECG')
+cd('ECG')
+
+A=[];   
 B=[];
-
-A= cat(1,data.ECG2w_1(:),data.ECG2w_2(:),data.ECG2w_3(:),data.ECG2w_4(:),data.ECG2w_5(:),data.ECG2w_6(:),data.ECG2w_7(:),data.ECG2w_8(:),data.ECG2w_9(:),data.ECG2w_10(:),data.ECG2w_11(:),data.ECG2w_12(:),data.ECG2w_13(:));
+for x2=1:30
+varExt = sprintf('ECG2w_%d',x2);
+if isfield(data,varExt)
+    stBuilder = sprintf('data.ECG2w_%d',x2);
+    Z = eval(stBuilder);
+    A =cat (1, A(:),Z(:));
+  
+end
+end
 
 a=A(:);
 a= reshape(A,1,[]);
 a=a';
 
+for x3=1:30
+varExt = sprintf('ECG2w_time_%d',x3);
+if isfield(data,varExt)
+    stBuilder = sprintf('data.ECG2w_time_%d',x3);
+    Z1 = eval(stBuilder);
+    B =cat (1, B(:),Z1(:));
+  
+end
+end
 
-B= cat(1,data.ECG2w_time_1(:),data.ECG2w_time_2(:),data.ECG2w_time_3(:),data.ECG2w_time_4(:),data.ECG2w_time_5(:),data.ECG2w_time_6(:),data.ECG2w_time_7(:),data.ECG2w_time_8(:),data.ECG2w_time_9(:),data.ECG2w_time_10(:),data.ECG2w_time_11(:),data.ECG2w_time_12(:),data.ECG2w_time_13(:));
 
 C=B(:);
 C= reshape(B,1,[]);
@@ -25,33 +43,60 @@ C= reshape(B,1,[]);
 AA= reshape(A,1,[]);
 
 initialTime=datetime(B(1)*86400, 'convertfrom','posixtime');
+Z = posixtime(datetime(initialTime));
 counter = 1;
 tempRowCounter = 1;
 
+
+
 while 1
-
-    nextEndTimeSt = initialTime.Year + "-" + initialTime.Month + "-" + initialTime.Day + " " + "23:59:59.00" 
-    nextEndTime = datetime(nextEndTimeSt,'InputFormat','yyyy-MM-dd HH:mm:ss.S')
-
-
-    initialTimeInT = (posixtime(datetime(initialTime))/86400);
-    %fprintf('%f\n',initialTimeInT)
-    nextEndTimeInT = (posixtime(datetime(nextEndTime))/86400);
-    %fprintf('%f\n',nextEndTimeInT);
-
-
-    tempArr = C(C >= initialTimeInT & C <= nextEndTimeInT);
-    sz = length(tempArr)
+    %End Day
+    nextEndTimeSt = initialTime.Year + "-" + initialTime.Month + "-" + initialTime.Day + " " + "23:59:59.00" ;
+    nextEndTime = datetime(nextEndTimeSt,'InputFormat','yyyy-MM-dd HH:mm:ss.S');
     
-    endRow = sz*480;
+    nextEnd5TimeSt = initialTime.Year + "-" + initialTime.Month + "-" + initialTime.Day + " " + "00:05:00.00" ;
+    nextEnd5Time = datetime(nextEnd5TimeSt,'InputFormat','yyyy-MM-dd HH:mm:ss.S');
+
+    
+    %Unix start Time
+    initialTimeInT = (posixtime(datetime(initialTime))/86400);
+    fprintf('%f\n',initialTimeInT);
+    %Unix end Time
+    nextEnd5TimeInT = (posixtime(datetime(nextEndTime))/86400);
+    fprintf('%f\n',nextEnd5TimeInT);
+
+
+    tempArr = C(C >= initialTimeInT & C <= nextEnd5TimeInT);
+    time1= reshape(tempArr,1,[]);
+    time1=time1';
+    Time= reshape(repmat(reshape(time1*86400, 1, []), 480, 1), [], 1);
+    sz = length(tempArr);
+    Time2=Time(:,1)-Z;
+    
+    endRow = (sz*480) - 1;
     actualEndRow = tempRowCounter + endRow;
+    
     X1=AA(tempRowCounter:actualEndRow);
+    
+    X1(X1<-3500 | X1>4000)= NaN;
+    
     X1= reshape(X1,1,[]);
+    Value=X1';
+    
+    X3=table(Time2,Value);
+    
+    filename = sprintf('ECG_%d.csv',counter);
+    X4=X3(1:3600000,:);
+    writetable(X4,filename);
+
     tempRowCounter=actualEndRow+1;
 
+
     finalEndTime = datetime(B(end)*86400, 'convertfrom','posixtime');
-    if counter == 14 %nextEndTime > finalEndTime
-        %counter = counter + 1;
+    if counter == 14 
+       
+        %fprintf((datetime(Z)))
+        %
         break
     end
     
@@ -59,17 +104,11 @@ while 1
     nextInitTimeSt = initialTime.Year + "-" + initialTime.Month + "-" + initialTime.Day + " " + "00:00:00.00";
     initialTime = datetime(nextInitTimeSt,'InputFormat','yyyy-MM-dd HH:mm:ss.S');
     counter = counter + 1
+    
+end
+cd ..
+cd ..
 end
 
-%aa = [1,2,3,4,5,6,7,8,10];
-%bb = aa(aa > 3 & aa < 9);
-
- 
-counter
-
-
-if x1 < x2
-    x1
-else
-    x2
 end
+
